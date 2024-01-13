@@ -7,6 +7,8 @@ import 'package:calculadora_imc/recetario_movil_sin_wifi.dart';
 
 double altura = 174.0;
 double peso = 61.0;
+double peso_log = 1;
+double position = 406.666666666;
 double imc = 20.1;
 String imagenSeleccionada = 'assets/images/undraw_hiking_re_k0bc.svg';
 RecetaModel receta = RecetaModel(
@@ -105,12 +107,21 @@ class _HomePageState extends State<HomePage> {
                         TextStyle(fontSize: 40.0, fontWeight: FontWeight.w900),
                   ),
                   Text(
-                    'kg',
+                    'Kg',
                     style:
                         TextStyle(fontSize: 20.0, fontWeight: FontWeight.w600),
                   ),
                 ],
               ),
+              /*
+              Text(
+                position.toString(),
+                style: TextStyle(
+                    fontSize: 24.0,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.red),
+              ),
+               */
               // Record de personas más pesadas:
               // https://es.wikipedia.org/wiki/Anexo:Personas_m%C3%A1s_pesadas
               // Record del bebé prematuro:
@@ -118,14 +129,31 @@ class _HomePageState extends State<HomePage> {
               Slider(
                 activeColor: Colors.blueAccent,
                 inactiveColor: Colors.blue.shade50,
-                min: 0.2,
-                max: 700.0,
-                divisions: 6998,
-                value: peso,
+                min: 0.0,
+                max: 1000.0,
+                divisions: 10000,
+                value: position,
                 onChanged: (value) {
-                  setState(() {
-                    peso = (value * 10).roundToDouble() / 10;
-                  });
+                  setState(
+                    () {
+                      /* calculamos el factor de ajuste logarítmico de tal forma
+                      que la media de 75kg esté en el medio de la escala
+                      */
+                      if (position <= 500) {
+                        peso = (position * 75 / 500).roundToDouble();
+                        position = (value * 10).roundToDouble() / 10;
+                      } else {
+                        var minv = log(75); // / log(100);
+                        var maxv = log(700); // / log(100);
+                        var maxp = 1000;
+                        var minp = 500;
+                        var scale = (maxv - minv) / (maxp - minp);
+                        peso = exp(minv + scale * (position - minp));
+                        peso = (peso * 10).roundToDouble() / 10;
+                        position = (value * 10).roundToDouble() / 10;
+                      }
+                    },
+                  );
                 },
               ),
               ElevatedButton(
